@@ -1,0 +1,14 @@
+<!doctype html>
+<title>Welcome to 4Corners</title>
+<h1>4Corners</h1>
+<h4>Driving Directions for the Safety Inclined</h4>
+
+<form action="{{ url_for('show_search') }}" method="post">
+    <dl>
+      <dt>Start:
+      <dd><input type="text" name="start_input">
+      <dt>Destination:
+      <dd><input type="text" name="finish_input">
+      <dd><input type="submit" value="Get Directions">
+    </dl>
+  </form>
