@@ -1,5 +1,5 @@
 
-#Dijkstra implementation to search a network graph. 
+#A* search implementation for geographic network graph. 
 #Start, finish and all nodes have lon/lat labels. 
 #Search is directed to favor points closer to destination for performance.
 import json
@@ -49,16 +49,19 @@ def dijkstra( start_point, finish_point, ac_network_data ):
 	count = 0
 	while found_it == False:
 		visited.append(tuple(start_node[0]))
-		if len(visited) > 500: #limit size of queue and visited for large searches for now
+		if len(visited) > 1000:
 			remove_item = visited.pop(0)
 			del dist_so_far[remove_item]
 		count += 1
-		print("num loops ", count)
+		print("num loops ", count, len(visited))
 		next_nodes = [ d for d in start_node[1] if "c_pt" not in d.keys() ]  #get adjacent nodes
 		if start_node == end_node:
 			found_it = True
 			nav_path = dist_so_far[start_node[0]]["path"] + [end_node[0]]
-			return [[i[0],i[1]] for i in nav_path]
+			return {"path":[[i[0],i[1]] for i in nav_path],"visited":visited}
+
+		#available_next = {nn: dist + nn["dist"] for nn in next_nodes  }		  
+
 		for next_node in next_nodes:
 			if tuple(next_node["end"]) not in [i[0] for i in dist_so_far]:	#add new node to queue	
 				dist_so_far[tuple(next_node["end"])] = {"fs": dist + next_node["dist"],
@@ -71,9 +74,26 @@ def dijkstra( start_point, finish_point, ac_network_data ):
 															"path": dist_so_far.get(start_node[0])["path"] + [tuple(next_node["end"])] }
 
 		#return from queue possible next nodes to check 
-		available_unvisited = {k: [dist_so_far[k]["fs"], dist_so_far[k]["tf"]] for k in dist_so_far if k not in visited  }
-		nearest_to_dest = min(available_unvisited, key=lambda x: available_unvisited[x][1] ) #first check node in queue that is closest to destination
-		start_node = [nearest_to_dest, ac_network_data.get(str(nearest_to_dest))]
-		dist = dist_so_far[nearest_to_dest]["fs"]
+		#available_unvisited = {k: dist_so_far[k]["fs"] + dist_so_far[k]["tf"] for k in dist_so_far  }
+		#THIS IS THE RIGHT ONE:
+		available_unvisited = {k: dist_so_far[k]["fs"] + dist_so_far[k]["tf"] for k in dist_so_far if k not in visited  }
+		best_to_dest = min(available_unvisited, key=lambda x: available_unvisited[x] ) #first check node in queue that is closest to destination
+		
 
+		print("####", dist_between_nodes(best_to_dest, end_node[0]))
+		start_node = [best_to_dest, ac_network_data.get(str(best_to_dest))]
+		dist = dist_so_far[best_to_dest]["fs"]
+
+# delco_network_datafile = 'delco_crashes_in_geo_network.json'
+
+# with open(delco_network_datafile) as data_file:    
+#     ac_network_data = json.load(data_file)
+
+# home = tuple([-75.345943, 39.903247])
+# swat = tuple([-75.355627, 39.907071])
+# media = tuple([-75.391199, 39.922603])
+# ford = tuple([-75.311294, 40.005358])
+# a_star = dijkstra( home, ford, ac_network_data )
+# print(  "FINISHED!!!")
+# print( len(a_star["path"]), len( a_star["visited"] ) )
 
