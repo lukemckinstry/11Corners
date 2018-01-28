@@ -18,7 +18,7 @@ breakpoints_input = sys.argv[4]
 #network_geo_datafile = '../delco_network.json'
 #merged_output_datafile = 'delco_crashes_in_geo_network.json'
 
-#convert dick key from string to floats
+#convert dict key from string to floats
 def string_to_float(input_string):
 	item = input_string.split(",")
 	return tuple([ float(point.replace("(","").replace(")","")) for point in item])
