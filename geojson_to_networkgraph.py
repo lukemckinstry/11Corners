@@ -48,8 +48,10 @@ def add_points_to_graph(points_in_line, network_graph):
 def process_feature(feature, network_graph):
 	#Get points in feature (e.g. LineString) and assign them to network graph
 	feature_geometry = feature['geometry']
-	points_in_line = get_points_in_line(feature_geometry)
-	add_points_to_graph(points_in_line, network_graph)
+	if feature_geometry['type'] != 'Point':
+
+		points_in_line = get_points_in_line(feature_geometry)
+		add_points_to_graph(points_in_line, network_graph)
 	return
 
 def iterate_features(features, network_graph, total):
@@ -88,7 +90,7 @@ def main(infile, outfile):
 	return
 
 #sample input/output files
-# infile = 'pa.json'
-# outfile = 'pa_network.json'
+infile = '../../osmdata/delco_export.geojson'
+outfile = '../../osmdata/delcoosm_network.json'
 
 main(infile, outfile)

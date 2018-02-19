@@ -102,7 +102,7 @@ def find_nearest(sub_dict, ct):
 				 		nearest_dist = dist
 				 		nearest_edge = [start, end]
 				except:
-					pass				
+					pass
 		return nearest_edge
 
 def assign_to_node(geo_dict_slice, crash_dict_object, this_crash_point, nearest_graph_edge):
@@ -145,6 +145,7 @@ def iterate_through_crashes( crash_dict_object, geo_dict_object, breakpoints ):
 		for this_crash_point in crash_dict_object[i]: #current graph point to pass through dist and assignment functions
 			sub_dict = get_sub_dict(this_crash_point, geo_dict_iterator)
 			nearest_graph_edge = find_nearest(sub_dict, this_crash_point)
+			assign_to_node( sub_dict, crash_dict_object, this_crash_point, nearest_graph_edge)
 	return
 
 def combine(geo_dict_object, output_dict, breakpoints):
@@ -153,6 +154,7 @@ def combine(geo_dict_object, output_dict, breakpoints):
 		for geo_node in geo_dict_object[i]: 
 			output_dict[ str(geo_node) ] = geo_dict_object[i][geo_node] 
 	return
+
 
 def write_to_file(output_dict):
 	with open(merged_output_datafile, 'w') as outfile:
