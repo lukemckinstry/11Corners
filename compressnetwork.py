@@ -21,7 +21,6 @@ def create_compress_graph(feature_dict, compress_graph, total):
 	for feature in feature_dict:
 		if len(feature_dict[feature]) != 2:
 			compress_graph[feature] = []
-		#process_feature(feature_dict[feature], compress_graph)
 	return
 
 def rewrite_nodes(feature_dict, compress_graph, total):
@@ -36,20 +35,15 @@ def rewrite_nodes(feature_dict, compress_graph, total):
 				compress_graph[c_node].append( {'end': end_point['end'], 'dist': end_point['dist']  } )
 			#if node is len 2, we need to crawl
 			else:
-				#print("end_point", end_point['end']  )
-				#print("2 WAY NODE", feature_dict_node )
-
-				terminal_node = crawl_2_way_node( c_node, tuple(end_point['end']) , feature_dict)
-				compress_graph[c_node].append( {'end': terminal_node } )
+				terminal_node, dist = crawl_2_way_node( c_node, tuple(end_point['end']) , feature_dict)
+				compress_graph[c_node].append( {'end': terminal_node, 'dist': dist } )
 	return
 
 def crawl_2_way_node(prev_node, current_node, feature_dict):
-	#print("CRAWL --> c_node", current_node)	
-	next_node = get_other_side_of_two_way_node( prev_node, current_node, feature_dict )#
+	next_node, dist = get_other_side_of_two_way_node( prev_node, current_node, feature_dict )#
 	if len(feature_dict[ tuple(next_node)]) != 2:
-		return next_node
+		return next_node, dist
 	else:
-		#print( "NEXT NODE of", str(next_node),  feature_dict[tuple(next_node)] )		
 		return crawl_2_way_node(current_node, tuple(next_node), feature_dict)
 
 
@@ -62,10 +56,10 @@ def get_other_side_of_two_way_node( visited_node, current_node, feature_dict ):
 	# print("TO CHOOSE FROM 1", tuple(feature_dict[current_node][1]['end']  )  )
 	if visited_node == tuple(feature_dict[current_node][0]['end']):
 		#print("returning ", feature_dict[current_node][1]['end']) 
-		return tuple(feature_dict[current_node][1]['end'])
+		return [tuple(feature_dict[current_node][1]['end']), feature_dict[current_node][1]['dist']]
 	if visited_node == tuple(feature_dict[current_node][1]['end']):
 		#print("returning ", feature_dict[current_node][0]['end']) 
-		return tuple(feature_dict[current_node][0]['end'])
+		return [tuple(feature_dict[current_node][0]['end']), feature_dict[current_node][0]['dist']]
 	else:
 		print("NEITHER")
 	return
