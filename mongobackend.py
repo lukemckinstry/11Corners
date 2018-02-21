@@ -1,5 +1,5 @@
 
-#convert geojson data (composed of LineString or MultLineString features) to network graph
+#insert map data dictionaries into containerized (0.05 meridians) mongo database
 import json
 import pymongo
 from pymongo import MongoClient
@@ -7,8 +7,6 @@ import math
 
 client = MongoClient('localhost', 27017)
 db = client['delco-network']
-print("derp")
-
 
 def string_to_float(input_string):
 	item = input_string.split(",")
@@ -33,64 +31,26 @@ def prep_slice_dict(feature_dict, slice_network):
 
 def insert_to_mongo( slice_network ):
 	for slice_key in slice_network:
-		print(  "HAPPENING ", slice_key)
 		db.slices.save( { 'latmin': slice_key[0], 'latmax':slice_key[1], 'nodes' : slice_network[slice_key] } )
 	return
 
 def querymongo():
 	slices = db.slices
-	cursor = slices.find( {})
-	for document in cursor:
-          print( document['latmin'], document['latmax'])
-          print( len(document['nodes']) )
-	#print(  "GOT A SLICE", len( slice_obj  ))
-	#print( slice_obj )
-	print( "OUR WORK IS FINISHED" )
+	pointlat = -75.28
+	cursor = slices.find( { 'latmin' : { '$lt' : pointlat  } , 'latmax' : { '$gt' : pointlat  }   })
+	#for document in cursor: print( len(document['nodes']) )
 	return
 
-
-def sanity_check(network_graph):
-	big_points = 0
-	total = 0
-	for i in network_graph:	
-		total += 1
-		try:
-			if len( network_graph[i] ) > 2:
-				big_points += 1
-		except:
-			print(i)
-			pass
-	print("total " , total) 
-	print("big_points ", big_points)
-	return
-
-def glance(compress_graph):
-	
-	for n in compress_graph:
-		print( compress_graph[n] )
-
-def write_to_file(compress_graph, outfile):
-	output_graph = {}
-	for g in compress_graph:
-		output_graph[str(g)] = compress_graph[g]
-	with open(outfile, 'w') as write_file:
-		json.dump(output_graph, write_file)
-	return
-
-def main(infile, outfile):
+def main(infile):
 	features = get_data(infile)
-	
-
 	slice_network = {}
 	prep_slice_dict( features, slice_network )
 	insert_to_mongo( slice_network )
-
 	querymongo()
-	
+	print("LEN SLICE NETWORK", len(slice_network))
 	return
 
 #sample input/output files
-outfile = ''
 infile = '../../osmdata/compress_delco.geojson'
 
-main(infile, outfile)
+main(infile)
