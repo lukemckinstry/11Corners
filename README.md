@@ -8,6 +8,10 @@ About:
 This is a project of the Code4PA Hackathon https://www.code4pa.tech/
 
 Pipeline:
-1) Download US Census Bureau .shp files of roadways, convert to geojson (https://github.com/mbostock/shapefile#shp2json)
-2) Convert geojson to network graph with geojson-to-networkgraph.py (geojson features should be 'LineString' or 'MultiLineString'), pop this in app backend or...
-3) Add processed PennDOT crash data (or other processed data with geographic coordinates) to network graph using map matching script, map_matching.py
+1) Get Some Roadway Data
+  A) (New and better!) Use the Open Street Map query tool http://overpass-turbo.eu/, to get a geojson file of roadways. Help exporting roads is here (https://help.openstreetmap.org/questions/30692/export-only-roads). 
+  B) or download US Census Bureau .shp files of roadways, convert to geojson (https://github.com/mbostock/shapefile#shp2json)
+2) Convert and Compress 
+  2a) Convert geojson to network graph with geojson-to-networkgraph.py (geojson features should be 'LineString' or 'MultiLineString'), this file will be big so...
+  2b) Compress the network graph with compressnetwork.py, simplify network x10!
+3) Add PennDOT crash locations (or any data with geographic coordinates) to the network graph with map_matching.py
