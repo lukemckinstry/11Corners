@@ -4,9 +4,16 @@ import json
 import pymongo
 from pymongo import MongoClient
 import math
+from config import mongo_uri
 
-client = MongoClient('localhost', 27017)
-db = client['delco-network']
+### Standard URI format: mongodb://[dbuser:dbpassword@]host:port/dbname
+#uri = 'mongodb://user:pass@host:port/db'
+client = pymongo.MongoClient(mongo_uri)
+db = client.get_default_database()
+
+#local mongo db setup
+#client = MongoClient('localhost', 27017)
+#db = client['delco-network']
 
 def string_to_float(input_string):
 	item = input_string.split(",")
@@ -22,11 +29,14 @@ def get_data(geojson_datafile):
 	return output_dict
 
 
+def round_nearest(x, a):
+    return round(round(x / a) * a, -int(math.floor(math.log10(a))))
+
 def prep_slice_dict(feature_dict, slice_network):
-	slices = set([ math.floor(f[0] / 0.05) * 0.05 for f in feature_dict  ])
+	slices = sorted(set([ round_nearest(f[0], 0.05) for f in feature_dict  ]))
 	for s in slices:
 		subdict = { str(x).replace('.','&#46;'): feature_dict[x] for x in feature_dict if x[0] >= s and x[0] < s + 0.05}
-		slice_network[ tuple([s,s+0.05])] = subdict	
+		slice_network[ tuple([s,round_nearest(s+0.05,0.05)  ])] = subdict	
 	return
 
 def insert_to_mongo( slice_network ):
@@ -37,20 +47,21 @@ def insert_to_mongo( slice_network ):
 def querymongo():
 	slices = db.slices
 	pointlat = -75.28
-	cursor = slices.find( { 'latmin' : { '$lt' : pointlat  } , 'latmax' : { '$gt' : pointlat  }   })
-	#for document in cursor: print( len(document['nodes']) )
+	cursor = slices.find( { 'latmin' : { '$lt' : pointlat  } , 'latmax' : { '$gt' : pointlat  }   })	
+	for document in cursor:
+	#	print( len(document['nodes']) )
 	return
 
 def main(infile):
 	features = get_data(infile)
 	slice_network = {}
 	prep_slice_dict( features, slice_network )
-	insert_to_mongo( slice_network )
+	#insert_to_mongo( slice_network )
 	querymongo()
-	print("LEN SLICE NETWORK", len(slice_network))
+	#print("MONGO URI", mongo_uri)
 	return
 
 #sample input/output files
-infile = '../../osmdata/compress_delco.geojson'
+infile = '../../osmdata/compress_merge_delco.geojson'
 
 main(infile)
