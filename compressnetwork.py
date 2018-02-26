@@ -16,14 +16,15 @@ def get_data(geojson_datafile):
 		output_dict[tuple_key] = data[key]
 	return output_dict
 
-def create_compress_graph(feature_dict, compress_graph, total):
-	#Walk through each feature in geojson data
+def create_compress_graph(feature_dict, compress_graph):
 	for feature in feature_dict:
 		if len(feature_dict[feature]) != 2:
 			compress_graph[feature] = []
 	return
 
-def rewrite_nodes(feature_dict, compress_graph, total):
+def rewrite_nodes(feature_dict, compress_graph):
+	#create compress graph
+	create_compress_graph(feature_dict, compress_graph)
 	#Walk through each feature in geojson data
 	for c_node in compress_graph:
 		#print("C_NODE**********", c_node )
@@ -97,8 +98,8 @@ def main(infile, outfile):
 	total = len(features)
 	print( total )
 	compress_graph = {}
-	create_compress_graph(features, compress_graph, total)
-	rewrite_nodes(features, compress_graph, total)
+	create_compress_graph(features, compress_graph)
+	rewrite_nodes(features, compress_graph)
 	glance( compress_graph )
 	print( len(compress_graph) )
 	write_to_file(compress_graph, outfile)

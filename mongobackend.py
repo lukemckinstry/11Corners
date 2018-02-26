@@ -50,9 +50,27 @@ def prep_insert_dict(feature_dict, prep_network):
 		prep_network[ tuple([s,round_nearest(s+0.05,0.05)  ])] = subdict	
 	return
 
+
+def prep_slice_dict(feature_dict, slice_network):
+	lon_slices = sorted(set([ round_nearest(f[0], 0.05) for f in feature_dict  ]))
+	lat_slices = sorted(set([ round_nearest(f[1], 0.05) for f in feature_dict  ]))
+	for lat_s in lat_slices:
+		for lon_s in lon_slices:
+			subdict = { str(x).replace('.','&#46;'): feature_dict[x] for x in feature_dict if 
+							x[0] >= lon_s and x[0] < lon_s + 0.05  and
+							x[1] >= lat_s and x[1] < lat_s + 0.05	}
+			lon_id = tuple([lon_s,round_nearest(lon_s+0.05,0.05) ])
+			lat_id = tuple([lat_s,round_nearest(lat_s+0.05,0.05) ])
+			slice_network[ tuple([lon_id, lat_id]  )  ] = subdict	
+	return
+
 def query_tile(tile_key):
-	print( "QUERY-TILE", tile_key, tile_key[0], tile_key[1] )
-	cursor = db.slices.find_one( { 'latmin' : { '$eq' : tile_key[0]  } , 'latmax' : { '$eq' : tile_key[1]  }   })	
+	print( "QUERY-TILE", tile_key, tile_key[0][0],tile_key[0][1], tile_key[1][0], tile_key[1][1] )
+	cursor = db.slices.find_one( {	'lonmin' : { '$eq' : tile_key[0][0]  } ,
+									'lonmax' : { '$eq' : tile_key[0][1]  } ,
+									'latmin' : { '$eq' : tile_key[1][0]  } ,
+									'latmax' : { '$eq' : tile_key[1][1]  } ,
+									  })	
 	# for document in cursor:
 	# 	print( len(document['nodes']) )
 	if cursor:
@@ -68,28 +86,37 @@ def insert_to_mongo( slice_network ):
 			#print( "BEFORE UPDATE ", len(existing_dict ) )
 			existing_dict.update( slice_network[slice_key] )
 			#print( "AFTER UPDATE ", len(existing_dict ) )
-			db.slices.update( { 'latmin': slice_key[0], 'latmax':slice_key[1] }, { 'latmin': slice_key[0], 'latmax':slice_key[1], 'nodes' : existing_dict } )
+			db.slices.update( { 'lonmin': slice_key[0][0], 'lonmax':slice_key[0][1],
+								'latmin': slice_key[1][0], 'latmax':slice_key[1][1], },
+							{ 	'lonmin': slice_key[0][0], 'lonmax':slice_key[0][1],
+								'latmin': slice_key[1][0], 'latmax':slice_key[1][1],
+								'nodes' : existing_dict } )
 		else:
 			print( "NO EXISTING DOC, SAVING NEW ONE", slice_key  )
 			existing_dict = slice_network[slice_key]
-			db.slices.save( { 'latmin': slice_key[0], 'latmax':slice_key[1], 'nodes' : existing_dict } )		
+			db.slices.save( {	'lonmin': slice_key[0][0], 'lonmax':slice_key[0][1],
+								'latmin': slice_key[1][0], 'latmax':slice_key[1][1],
+								'nodes' : existing_dict } )		
 	return
 
 
 def querymongo():
 	#slices = db.slices
 	pointlat = -75.28
-	cursor = db.slices.find( { 'latmin' : { '$lt' : pointlat  } , 'latmax' : { '$gt' : pointlat  }   })	
+	cursor = db.slices.find( { 'lonmin' : { '$lt' : pointlat  } , 'lonmax' : { '$gt' : pointlat  }   })	
+	total = 0
 	for document in cursor:
 		print( len(document['nodes']) )
+		total += len(document['nodes'])
+	print( "TOTAL --> ", total )
 	return
 
 def main(infile):
 	features = get_data(infile)
 	prep_network = {}
-	prep_insert_dict( features, prep_network )
+	prep_slice_dict( features, prep_network )
 	insert_to_mongo( prep_network )
-	#querymongo()
+	querymongo()
 	#print("MONGO URI", mongo_uri)
 	return
 
