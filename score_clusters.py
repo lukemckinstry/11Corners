@@ -32,6 +32,7 @@ def split_crash_dict( crash_data, breakpoints ):
 	#slice crash data
 	split_dicts_list = [{} for _ in range(len(breakpoints)-1)]
 	for i in range( len(breakpoints)-1 ):
+		print(i / len(breakpoints) * 100)
 		split_dicts_list[i] = { k: crash_data[k] for k in crash_data if breakpoints[i]<k[0]<breakpoints[i+1] }
 	return split_dicts_list
 
@@ -39,7 +40,7 @@ def iterate_through_crashes( crash_dict_object, breakpoints, output_dict ):
 	# iterate through each crash point to assign it to network graph
 	for i in range(len(breakpoints)-1):
 	#for i in range(3):	
-		print( len(crash_dict_object[i]) )
+		print( "PROGRESS ", i/len(breakpoints) * 100  )
 		
 		for this_crash_point in crash_dict_object[i]: #current graph point to pass through dist and assignment functions
 
@@ -80,7 +81,9 @@ def write_to_file(crash_outfile, output_dict):
 
 def main(crash_datafile, breakpoints_input, crash_outfile):
 	crash_dict = get_crash_data(crash_datafile)
+	print("HERE", len(crash_dict))
 	breakpoints = get_breakpoints( crash_dict, int(breakpoints_input) )  #number of breakpoints specific by command line input
+	print("HERE1")
 	crash_dict_object = split_crash_dict( crash_dict, breakpoints )
 	output_dict = {}
 	iterate_through_crashes(crash_dict_object, breakpoints, output_dict)
@@ -89,7 +92,7 @@ def main(crash_datafile, breakpoints_input, crash_outfile):
 	return
 
 crash_datafile = '../../PA/pa_crash_data_light.json'
-crash_outfile = '../../PA/pa_wighted_crashes.json'
+crash_outfile = '../../PA/pa_weighted_crashes.json'
 breakpoints_input = 500
 
 main(crash_datafile, breakpoints_input, crash_outfile)
