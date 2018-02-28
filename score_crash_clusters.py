@@ -1,3 +1,5 @@
+#takes in a file of crashes and scores each crash based on promiximity to other crashes
+
 import json
 import matplotlib.pyplot as plt
 
