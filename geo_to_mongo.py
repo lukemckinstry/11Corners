@@ -25,15 +25,15 @@ db = client.get_default_database()
 
 def string_to_float(input_string):
 	'''
-	for reading data from file i.e not mongo db
-	converts key in mongo dict to float
+	for reading data from file i.e. not mongo db
+	converts "(str1,str2)" to tuple(float,float)
 	'''
 	item = input_string.split(",")
 	return tuple([ float(point.replace("(","").replace(")","")) for point in item])
 
 def get_data(geojson_datafile):
 	'''
-	for reading data from file i.e not mongo db
+	for reading data from file i.e. not mongo db
 	reads json object network graph from file to python dict 
 	'''
 	with open(geojson_datafile) as data_file:
@@ -47,14 +47,14 @@ def get_data(geojson_datafile):
 
 def round_nearest(x, a):
 	'''
-	floors floating point to 0.05, with precision 
+	floors to precision a, and then to number of significant digits, that has precision a
 	'''
-    return round(round(x / a) * a, -int(math.floor(math.log10(a))))
+	return round(math.floor(x / a) * a, -int(math.floor(math.log10(a))))
 
 def prep_insert_dict(feature_dict, prep_network):
 	'''
 	for reading data from file i.e not mongo db
-	adds 4-part keys (minlon, maxlon, minlat. maxlat) to python dict to store each network graph point 
+	adds 4-part keys (minlon, maxlon, minlat, maxlat) to python dict to store each network graph point 
 	'''
 	slices = sorted(set([ round_nearest(f[0], 0.05) for f in feature_dict  ]))
 	for s in slices:
@@ -68,12 +68,10 @@ def prep_slice_dict(feature_dict, slice_network):
 	for reading data from mongo db, not file
 	adds subdict of network graph points to new python dict id'd  by 4-part keys (minlon, maxlon, minlat. maxlat) 
 	'''
-	
 	lon_breaks = sorted(set([ round_nearest(f[0], 0.05) for f in feature_dict  ]))
 	lat_breaks = sorted(set([ round_nearest(f[1], 0.05) for f in feature_dict  ]))
 	lon_slices = [tuple([s, round_nearest(s+0.05, 0.05)]) for s in lon_breaks ] 
 	lat_slices = [tuple([s, round_nearest(s+0.05, 0.05)]) for s in lat_breaks ] 
-
 	for lat_s in lat_slices:
 		for lon_s in lon_slices:
 			subdict = { str(x).replace('.','&#46;'): feature_dict[x] for x in feature_dict if 
@@ -146,8 +144,8 @@ def main(infile):
 	features = get_data(infile)
 	prep_network = {}
 	prep_slice_dict( features, prep_network )
-	insert_to_mongo( prep_network )
-	querymongo()
+	#insert_to_mongo( prep_network )
+	#querymongo()
 	#print("MONGO URI", mongo_uri)
 	return
 
