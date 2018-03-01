@@ -12,10 +12,11 @@ def get_points_in_line(feature_geometry):
 	#handle geojson data types
 	if feature_geometry['type'] == 'LineString':
 		return feature_geometry['coordinates']
+
 	if feature_geometry['type'] != 'LineString':
 		return [item for sublist in feature_geometry['coordinates'] for item in sublist]
 
-def add_points_to_graph(points_in_line, network_graph):
+def add_points_to_graph(points_in_line, network_graph, stree_name):
 	# walk through geojson data to build network graph
 	for p in range(len(points_in_line)):
 		
@@ -26,14 +27,14 @@ def add_points_to_graph(points_in_line, network_graph):
 		if (p > 0):
 			prev_point = tuple(points_in_line[p-1])
 			prev_point_dist = sqrt( (this_point[0] - prev_point[0])**2 + (this_point[1] - prev_point[1])**2 )
-			prev_point_obj = {"end": prev_point, "dist": prev_point_dist}
+			prev_point_obj = {"end": prev_point, "dist": prev_point_dist, "st": stree_name}
 		else: #first point in LineString has no previous point
 			prev_point = None
 
 		if p < (len( points_in_line) -1):
 			next_point = tuple(points_in_line[p+1])
 			next_point_dist = sqrt( (this_point[0] - next_point[0])**2 + (this_point[1] - next_point[1])**2 )
-			next_point_obj = {"end": next_point, "dist": next_point_dist}
+			next_point_obj = {"end": next_point, "dist": next_point_dist, "st": stree_name}
 		else: #last point in LineString has no next point
 			next_point = None
 		
@@ -47,11 +48,14 @@ def add_points_to_graph(points_in_line, network_graph):
 
 def process_feature(feature, network_graph):
 	#Get points in feature (e.g. LineString) and assign them to network graph
+	street_name = ''
+	if 'name' in feature['properties']:
+		street_name = feature['properties']['name']
 	feature_geometry = feature['geometry']
 	if feature_geometry['type'] != 'Point':
 
 		points_in_line = get_points_in_line(feature_geometry)
-		add_points_to_graph(points_in_line, network_graph)
+		add_points_to_graph(points_in_line, network_graph, street_name)
 	return
 
 def iterate_features(features, network_graph, total):
@@ -63,6 +67,8 @@ def iterate_features(features, network_graph, total):
 def sanity_check(network_graph):
 	big_points = 0
 	total = 0
+	total_streets = 0
+	blank_streets = 0
 	for i in network_graph:	
 		total += 1
 		try:
@@ -71,8 +77,15 @@ def sanity_check(network_graph):
 		except:
 			print(i)
 			pass
+		for end in network_graph[i]:
+			total_streets += 1
+			if end['st'] == "":
+				blank_streets += 1
+
 	print("total " , total) 
 	print("big_points ", big_points)
+	print( "total_streets ", total_streets )
+	print( "blank_streets ", blank_streets )
 	return
 
 def write_to_file(network_graph, outfile):
@@ -90,7 +103,7 @@ def main(infile, outfile):
 	return
 
 #sample input/output files
-infile = '../../osmdata/delco_export.geojson'
-outfile = '../../osmdata/delcoosm_network.json'
+infile = '../../osmdata/delco/delco_export.geojson'
+outfile = '../../osmdata/delco/delcoosm_network-streetnames.json'
 
 main(infile, outfile)

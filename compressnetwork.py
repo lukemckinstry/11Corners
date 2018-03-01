@@ -27,23 +27,32 @@ def rewrite_nodes(feature_dict, compress_graph):
 	create_compress_graph(feature_dict, compress_graph)
 	#Walk through each feature in geojson data
 	for c_node in compress_graph:
-		#print("C_NODE**********", c_node )
+		#print("C_NODE**********" )
+		
 		for end_point in feature_dict[c_node]:
-			#print("ENDPOINT$$$$", end_point)
+			#print("ENDPOINT$$$#############$")
 			#if node is not 2 way node, add it	
+			
 			feature_dict_node = feature_dict[ tuple(end_point['end'])]
 			if len( feature_dict_node ) != 2:
-				compress_graph[c_node].append( {'end': end_point['end'], 'dist': end_point['dist']  } )
+				compress_graph[c_node].append( {'end': end_point['end'],
+												'dist': end_point['dist'],
+												'st': end_point['st']  } )
 			#if node is len 2, we need to crawl
 			else:
-				terminal_node, dist = crawl_2_way_node( c_node, tuple(end_point['end']) , feature_dict)
-				compress_graph[c_node].append( {'end': terminal_node, 'dist': dist } )
+				#print("NAME OF STREET FOR TWO WAY NODE ", end_point['st'])
+				terminal_node, dist, street_name = crawl_2_way_node( c_node, tuple(end_point['end']) , feature_dict)
+				#print( "RETURNED TERMINAL NODE ", street_name )
+				compress_graph[c_node].append( {'end': terminal_node, 'dist': dist, 'st': street_name } )
 	return
 
 def crawl_2_way_node(prev_node, current_node, feature_dict):
-	next_node, dist = get_other_side_of_two_way_node( prev_node, current_node, feature_dict )#
+	# if  feature_dict[current_node][0]["st"] != feature_dict[current_node][1]["st"]:
+	# 	print("YIKES" , feature_dict[current_node] )
+	next_node, dist, street_name = get_other_side_of_two_way_node( prev_node, current_node, feature_dict )#
+	#print( "next_node -> ", next_node, " -> ", feature_dict[next_node])
 	if len(feature_dict[ tuple(next_node)]) != 2:
-		return next_node, dist
+		return next_node, dist, street_name
 	else:
 		return crawl_2_way_node(current_node, tuple(next_node), feature_dict)
 
@@ -56,11 +65,17 @@ def get_other_side_of_two_way_node( visited_node, current_node, feature_dict ):
 	# print("TO CHOOSE FROM 0", tuple(feature_dict[current_node][0]['end']  )  )
 	# print("TO CHOOSE FROM 1", tuple(feature_dict[current_node][1]['end']  )  )
 	if visited_node == tuple(feature_dict[current_node][0]['end']):
+		#print("######street ", feature_dict[current_node][1]['st']) 
 		#print("returning ", feature_dict[current_node][1]['end']) 
-		return [tuple(feature_dict[current_node][1]['end']), feature_dict[current_node][1]['dist']]
+		return [tuple(feature_dict[current_node][1]['end']),
+					  feature_dict[current_node][1]['dist'],
+					  feature_dict[current_node][1]['st']]
 	if visited_node == tuple(feature_dict[current_node][1]['end']):
+		#print("######street ", feature_dict[current_node][0]['st']) 
 		#print("returning ", feature_dict[current_node][0]['end']) 
-		return [tuple(feature_dict[current_node][0]['end']), feature_dict[current_node][0]['dist']]
+		return [tuple(feature_dict[current_node][0]['end']),
+					  feature_dict[current_node][0]['dist'],
+					  feature_dict[current_node][0]['st']]
 	else:
 		print("NEITHER")
 	return
@@ -68,6 +83,8 @@ def get_other_side_of_two_way_node( visited_node, current_node, feature_dict ):
 def sanity_check(network_graph):
 	big_points = 0
 	total = 0
+	total_streets = 0
+	blank_streets = 0
 	for i in network_graph:	
 		total += 1
 		try:
@@ -76,8 +93,14 @@ def sanity_check(network_graph):
 		except:
 			print(i)
 			pass
+		for end in network_graph[i]:
+			total_streets += 1
+			if end['st'] == "":
+				blank_streets += 1
 	print("total " , total) 
 	print("big_points ", big_points)
+	print( "total_streets ", total_streets )
+	print( "blank_streets ", blank_streets )
 	return
 
 def glance(compress_graph):
@@ -100,13 +123,13 @@ def main(infile, outfile):
 	compress_graph = {}
 	create_compress_graph(features, compress_graph)
 	rewrite_nodes(features, compress_graph)
-	glance( compress_graph )
+	sanity_check( compress_graph )
 	print( len(compress_graph) )
-	write_to_file(compress_graph, outfile)
+	#write_to_file(compress_graph, outfile)
 	return
 
 #sample input/output files
-infile = '../../osmdata/delcoosm_network.json'
-outfile = '../../osmdata/compress_delco.geojson'
+infile = '../../osmdata/delco/delcoosm_network-streetnames.json'
+outfile = '../../osmdata/delco/compress_delco-streetnames.json'
 
 main(infile, outfile)
